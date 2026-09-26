@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
-from app.models.billing import BillingRecord, ValidationError
+from app.models.billing import BillingRecord
+from pydantic import ValidationError
 from app.services.repository import InMemoryBillingRepository
 from app.services.reconciliation import compute_reconciliation
 from app.services.analytics import compute_analytics

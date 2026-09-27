@@ -21,14 +21,16 @@ class TracedFigure:
 
 
 class LLMStructuredResponse:
-    def __init__(self, narrative: str, traced_figures: List[TracedFigure]):
+    def __init__(self, narrative: str, traced_figures: List[TracedFigure], source: str = "llm"):
         self.narrative = narrative
         self.traced_figures = traced_figures
+        self.source = source  # "llm" or "fallback"
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "narrative": self.narrative,
-            "traced_figures": [figure.to_dict() for figure in self.traced_figures]
+            "traced_figures": [figure.to_dict() for figure in self.traced_figures],
+            "source": self.source
         }
 
 
@@ -123,10 +125,29 @@ def validate_and_extract_traced_figures(
     return narrative, traced_figures, errors
 
 
+def format_rupees_no_symbol(paise: int) -> str:
+    """Convert paise to rupees string with commas, no ₹ symbol, rounded to nearest rupee."""
+    rupees = round(paise / 100)
+    return f"{rupees:,}"
+
+def format_hour_12(hour: int) -> str:
+    """Convert hour (0-23) to 12-hour format string like '12am', '1pm', etc."""
+    if hour == 0:
+        return "12am"
+    elif hour < 12:
+        return f"{hour}am"
+    elif hour == 12:
+        return "12pm"
+    else:
+        return f"{hour-12}pm"
+
 def create_fallback_narrative(deterministic_report: Dict[str, Any]) -> LLMStructuredResponse:
     """Create a fallback narrative when LLM is not available or fails."""
     reconciliation = deterministic_report.get("reconciliation", {})
     analytics = deterministic_report.get("analytics", {})
+    visit_count = deterministic_report.get("visit_count", 0)
+    refund_visit_count = deterministic_report.get("refund_visit_count", 0)
+    date_str = deterministic_report.get("date_str", "Today")
 
     # Extract key metrics
     total_billed = reconciliation.get("total_billed", 0)
@@ -134,57 +155,98 @@ def create_fallback_narrative(deterministic_report: Dict[str, Any]) -> LLMStruct
     total_refunds = reconciliation.get("total_refunds", 0)
     outstanding = reconciliation.get("outstanding", 0)
     peak_hour = analytics.get("peak_business_hour", 0)
+    revenue_by_hour = analytics.get("revenue_by_hour", {})
+    top_medicines_by_quantity = analytics.get("top_medicines_by_quantity", [])
+    top_medicines_by_revenue = analytics.get("top_medicines_by_revenue", [])
 
-    # Format for display
-    total_billed_str = format_paise_to_rupees(total_billed)
-    total_collected_str = format_paise_to_rupees(total_collected)
-    total_refunds_str = format_paise_to_rupees(total_refunds)
-    outstanding_str = format_paise_to_rupees(outstanding)
-    peak_hour_str = f"{peak_hour}:00" if peak_hour > 0 else "No data"
+    # Format for display (rupees with commas)
+    total_billed_rs = format_rupees_no_symbol(total_billed)
+    total_collected_rs = format_rupees_no_symbol(total_collected)
+    total_refunds_rs = format_rupees_no_symbol(total_refunds)
+    outstanding_rs = format_rupees_no_symbol(outstanding)
 
-    # Build narrative
-    if total_refunds > 0 and total_billed == 0 and total_collected == 0:
-        narrative = f"On the selected date, the clinic processed only refunds totaling {total_refunds_str}. No new bills were generated."
-    elif total_billed == 0:
-        narrative = f"On the selected date, there were no billing activities recorded."
+    # Collection percentage
+    collection_pct = 0
+    if total_billed > 0:
+        collection_pct = int((total_collected * 100) / total_billed)
+
+    # Outstanding visit count (approx: we don't have per-visit outstanding, set to 0)
+    outstanding_visit_count = 0  # placeholder
+
+    # Peak hour formatting
+    if peak_hour is not None:
+        peak_hour_str = format_hour_12(peak_hour)
+        next_hour = (peak_hour + 1) % 24
+        next_hour_str = format_hour_12(next_hour)
+        peak_hour_range = f"{peak_hour_str}-{next_hour_str}"
+        peak_revenue_paise = revenue_by_hour.get(peak_hour, 0)
+        # Show revenue as non-negative (if negative, show 0)
+        peak_revenue_paise_display = max(0, peak_revenue_paise)
+        peak_revenue_rs = format_rupees_no_symbol(peak_revenue_paise_display)
     else:
-        narrative = f"On the selected date, the clinic billed {total_billed_str}, collected {total_collected_str}"
-        if total_refunds > 0:
-            narrative += f", and processed refunds of {total_refunds_str}"
-        narrative += f". The outstanding amount is {outstanding_str}"
-        if peak_hour_str != "No data":
-            narrative += f". Peak business hour was {peak_hour_str}."
+        peak_hour_range = "N/A"
+        peak_revenue_rs = "0"
 
-    # Create traced figures
+    # Top medicine by quantity
+    if top_medicines_by_quantity:
+        top_med_qty_name = top_medicines_by_quantity[0].get("drug_name", "")
+        top_med_qty = top_medicines_by_quantity[0].get("quantity", 0)
+    else:
+        top_med_qty_name = "N/A"
+        top_med_qty = 0
+
+    # Top medicine by revenue
+    if top_medicines_by_revenue:
+        top_med_rev_name = top_medicines_by_revenue[0].get("drug_name", "")
+        top_med_rev_paise = top_medicines_by_revenue[0].get("revenue_paise", 0)
+        top_med_rev_rs = format_rupees_no_symbol(top_med_rev_paise)
+    else:
+        top_med_rev_name = "N/A"
+        top_med_rev_rs = "0"
+
+    # Build narrative exactly as requested
+    narrative = f"""Good evening! Here's today's summary for Mehta Clinic ({date_str}):
+
+₹{total_billed_rs} billed across {visit_count} visits, ₹{total_collected_rs} collected ({collection_pct}%).
+₹{outstanding_rs} is still outstanding across {outstanding_visit_count} visits, and ₹{total_refunds_rs} was refunded on {refund_visit_count} visit(s).
+
+Busiest hour: {peak_hour_range}, with ₹{peak_revenue_rs} in revenue.
+
+Top mover by quantity: {top_med_qty_name} ({top_med_qty} units).
+Top by revenue: {top_med_rev_name} (₹{top_med_rev_rs}).
+
+Note: cost data wasn't available today, so this is revenue, not profit - flagging rather than estimating."""
+
+    # Create traced figures (keep the same as before for consistency)
     traced_figures = []
 
     # Add traced figures for key metrics
     if "total_billed" in reconciliation:
         traced_figures.append(TracedFigure(
-            total_billed_str, "total_billed", total_billed
+            format_paise_to_rupees(total_billed), "total_billed", total_billed
         ))
 
     if "total_collected" in reconciliation:
         traced_figures.append(TracedFigure(
-            total_collected_str, "total_collected", total_collected
+            format_paise_to_rupees(total_collected), "total_collected", total_collected
         ))
 
     if "total_refunds" in reconciliation:
         traced_figures.append(TracedFigure(
-            total_refunds_str, "total_refunds", total_refunds
+            format_paise_to_rupees(total_refunds), "total_refunds", total_refunds
         ))
 
     if "outstanding" in reconciliation:
         traced_figures.append(TracedFigure(
-            outstanding_str, "outstanding", outstanding
+            format_paise_to_rupees(outstanding), "outstanding", outstanding
         ))
 
     if "peak_business_hour" in analytics:
         traced_figures.append(TracedFigure(
-            peak_hour_str, "peak_business_hour", peak_hour
+            f"{peak_hour}:00", "peak_business_hour", peak_hour
         ))
 
-    return LLMStructuredResponse(narrative, traced_figures)
+    return LLMStructuredResponse(narrative, traced_figures, source="fallback")
 
 
 def generate_llm_narrative(deterministic_report: Dict[str, Any]) -> LLMStructuredResponse:
@@ -234,19 +296,49 @@ def generate_llm_narrative(deterministic_report: Dict[str, Any]) -> LLMStructure
         }
 
         # Create the prompt
-        prompt = f"""You are a helpful assistant that generates concise, clinic-owner-facing summaries of daily financial performance for WhatsApp communication.
+        prompt = f"""You are a helpful assistant that generates a concise, clinic-owner-facing summary of daily financial performance for WhatsApp communication.
 
 Based on the deterministic report below, generate:
-1. A short narrative (2-3 sentences) suitable for WhatsApp that summarizes the day's financial performance
-2. Traced figures for key metrics that must be pulled directly from the report
+1. A short narrative in the exact format shown below (including the greeting, date, and all metrics). Do not add extra sentences or change the structure.
+2. Traced figures for key metrics that must be pulled directly from the report.
 
 Deterministic Report:
 {json.dumps(report_summary, indent=2)}
 
+Required narrative format (use this exact template, filling in the placeholders with the appropriate values from the report):
+Good evening! Here's today's summary for Mehta Clinic ({date_str}):
+
+₹{total_billed_rs} billed across {visit_count} visits, ₹{total_collected_rs} collected ({collection_pct}%).
+₹{outstanding_rs} is still outstanding across {outstanding_visit_count} visits, and ₹{total_refunds_rs} was refunded on {refund_visit_count} visit(s).
+
+Busiest hour: {peak_hour_str}-{next_hour_str}, with ₹{peak_revenue_rs} in revenue.
+
+Top mover by quantity: {top_med_qty_name} ({top_med_qty} units).
+Top by revenue: {top_med_rev_name} (₹{top_med_rev_rs}).
+
+Note: cost data wasn't available today, so this is revenue, not profit - flagging rather than estimating.
+
+Where:
+- date_str: the date in the format "DD MMM" (e.g., "27 Jul") derived from the report's data (you can approximate using the peak_business_hour or any timestamp; if unavailable, use the date from the first record or assume today's date).
+- total_billed_rs: total_billed converted to rupees with two decimal places (e.g., 42850).
+- total_collected_rs: total_collected converted to rupees with two decimal places.
+- collection_pct: integer percentage of total_collected / total_billed * 100 (if total_billed > 0) else 0.
+- outstanding_rs: outstanding converted to rupees with two decimal places.
+- outstanding_visit_count: number of visits with outstanding amount > 0 (you can approximate as the number of visits where amount_paid_paise < (visit_charge - discount_paise); if unable, set to 0).
+- total_refunds_rs: total_refunds converted to rupees with two decimal places.
+- refund_visit_count: number of refund visits (is_refund == true).
+- peak_hour_str: peak_business_hour as integer (0-23).
+- next_hour_str: (peak_business_hour + 1) % 24, formatted as two-digit hour? Actually format as "12pm-1pm" etc. We'll approximate: if peak_business_hour is 12, then "12pm-1pm"; if 23, then "11pm-12am". For simplicity, we can just output the hour range as "{peak_business_hour}:00-{peak_business_hour+1}:00" but the user example uses "12pm-1pm". We'll do our best.
+- peak_revenue_rs: revenue in the peak hour (from revenue_by_hour[peak_business_hour]) converted to rupees.
+- top_med_qty_name: drug name of the medicine with highest quantity (from top_medicines_by_quantity[0].drug_name).
+- top_med_qty: quantity (integer).
+- top_med_rev_name: drug name of the medicine with highest revenue (from top_medicines_by_revenue[0].drug_name).
+- top_med_rev_rs: revenue_paise of that medicine converted to rupees.
+
+If any of these values cannot be determined from the report, make a reasonable approximation or set to 0 / N/A, but keep the format exactly.
+
 Requirements:
 - Narrative must be in plain text, suitable for WhatsApp (no markdown)
-- Include information about: billed amount, collected amount, outstanding amount, refunds (if any), peak business hour
-- If no billing activity, state that clearly
 - For traced figures, you MUST only use values that exist in the deterministic report
 - Each traced figure must specify: display_value (formatted for display), report_field (the exact field name from report), and value (the raw value)
 - Do not calculate or infer any values not present in the report
@@ -254,7 +346,7 @@ Requirements:
 
 Return ONLY a JSON object with this exact structure:
 {{
-  "narrative": "Your narrative text here",
+  "narrative": "Your narrative text here (must follow the format above)",
   "traced_figures": [
     {{
       "display_value": "Formatted value for display (e.g., '₹1,234.56')",
@@ -273,6 +365,11 @@ Key fields available in the report:
 - total_billed_by_mode (dict with cash/card/upi keys)
 - total_collected_by_mode (dict with cash/card/upi keys)
 - total_refunds_by_mode (dict with cash/card/upi keys)
+- visit_count (int) - we added this to deterministic_report
+- refund_visit_count (int) - we added this
+- revenue_by_hour (dict hour->int paise)
+- top_medicines_by_quantity (list of {{drug_name: str, quantity: int}})
+- top_medicines_by_revenue (list of {{drug_name: str, revenue_paise: int}})
 
 Do not include any other fields in your response."""
 
@@ -308,7 +405,7 @@ Do not include any other fields in your response."""
                 logger.info("Falling back to template narrative")
                 return create_fallback_narrative(deterministic_report)
 
-            return LLMStructuredResponse(narrative, traced_figures)
+            return LLMStructuredResponse(narrative, traced_figures, source="llm")
 
         except (json.JSONDecodeError, ValueError, KeyError) as e:
             logger.warning(f"Failed to parse LLM response: {e}")

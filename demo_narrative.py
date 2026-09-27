@@ -19,7 +19,7 @@ from app.services.llm_narrative import generate_llm_narrative
 
 def load_billing_log(filename):
     """Load a billing log from the sample_billing_dataset directory."""
-    data_dir = os.path.join(os.path.dirname(__file__), "sample_billing_dataset")
+    data_dir = os.path.join(os.path.dirname(__file__), "frontend", "public", "sample_billing_dataset")
     path = os.path.join(data_dir, filename)
     with open(path, 'r') as f:
         return json.load(f)

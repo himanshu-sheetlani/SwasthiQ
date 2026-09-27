@@ -156,17 +156,35 @@ def test_create_fallback_narrative_refund_only():
             "total_refunds_by_mode": {"cash": 0, "card": 24000, "upi": 25000}
         },
         "analytics": {
-            "peak_business_hour": 0,
-            "revenue_by_hour": {},
-            "top_medicines_by_quantity": [],
-            "top_medicines_by_revenue": []
-        }
+            "peak_business_hour": 16,  # from the data: peak hour is 16 (4pm)
+            "revenue_by_hour": { 10: -24000, 13: -22000, 16: -3000 },
+            "top_medicines_by_quantity": [
+                {"drug_name": "OMEPRAZOLE", "quantity": 1},
+                {"drug_name": "METFORMIN", "quantity": 1},
+                {"drug_name": "ATORVASTATIN", "quantity": 2},
+                {"drug_name": "AMOXICILLIN", "quantity": 3}
+            ],
+            "top_medicines_by_revenue": [
+                {"drug_name": "METFORMIN", "revenue_paise": -3000},
+                {"drug_name": "OMEPRAZOLE", "revenue_paise": -4000},
+                {"drug_name": "AMOXICILLIN", "revenue_paise": -18000},
+                {"drug_name": "ATORVASTATIN", "revenue_paise": -24000}
+            ]
+        },
+        "visit_count": 3,
+        "refund_visit_count": 3
     }
 
     response = create_fallback_narrative(deterministic_report)
 
-    assert "refunds totaling ₹490.00" in response.narrative
-    assert "No new bills were generated" in response.narrative
+    # Check that the narrative follows the expected format
+    assert "Good evening! Here's today's summary for Mehta Clinic" in response.narrative
+    assert "₹0 billed across 3 visits, ₹0 collected (0%)." in response.narrative
+    assert "₹0 is still outstanding across 0 visits, and ₹490 was refunded on 3 visit(s)." in response.narrative
+    assert "Busiest hour: 4pm-5pm, with ₹0 in revenue." in response.narrative
+    assert "Top mover by quantity: OMEPRAZOLE (1 units)." in response.narrative
+    assert "Top by revenue: METFORMIN (₹-30)." in response.narrative
+    assert "Note: cost data wasn't available today, so this is revenue, not profit - flagging rather than estimating." in response.narrative
 
     # Check traced figures
     dict_response = response.to_dict()
@@ -197,12 +215,22 @@ def test_create_fallback_narrative_empty_day():
             "revenue_by_hour": {},
             "top_medicines_by_quantity": [],
             "top_medicines_by_revenue": []
-        }
+        },
+        "visit_count": 0,
+        "refund_visit_count": 0,
+        "date_str": "Today"
     }
 
     response = create_fallback_narrative(deterministic_report)
 
-    assert "no billing activities recorded" in response.narrative
+    # Check that the narrative follows the expected format
+    assert "Good evening! Here's today's summary for Mehta Clinic" in response.narrative
+    assert "₹0 billed across 0 visits, ₹0 collected (0%)." in response.narrative
+    assert "₹0 is still outstanding across 0 visits, and ₹0 was refunded on 0 visit(s)." in response.narrative
+    assert "Busiest hour: 12am-1am, with ₹0 in revenue." in response.narrative
+    assert "Top mover by quantity: N/A (0 units)." in response.narrative
+    assert "Top by revenue: N/A (₹0)." in response.narrative
+    assert "Note: cost data wasn't available today, so this is revenue, not profit - flagging rather than estimating." in response.narrative
 
     # Check traced figures
     dict_response = response.to_dict()
@@ -223,7 +251,7 @@ def test_create_fallback_narrative_normal_day():
         },
         "analytics": {
             "peak_business_hour": 13,
-            "revenue_by_hour": { "9": 9000, "10": 57000, "11": 33500, "12": 9500, "13": 76000, "14": 3500, "15": 41500, "16": 61000, "17": 22000, "18": 6000 },
+            "revenue_by_hour": { 9: 9000, 10: 57000, 11: 33500, 12: 9500, 13: 76000, 14: 3500, 15: 41500, 16: 61000, 17: 22000, 18: 6000 },
             "top_medicines_by_quantity": [
                 {"drug_name": "OMEPRAZOLE", "quantity": 18},
                 {"drug_name": "METFORMIN", "quantity": 14},
@@ -240,15 +268,22 @@ def test_create_fallback_narrative_normal_day():
                 {"drug_name": "PARACETAMOL", "revenue_paise": 21413},
                 {"drug_name": "PARACETMOL", "revenue_paise": 3500}
             ]
-        }
+        },
+        "visit_count": 18,
+        "refund_visit_count": 0,
+        "date_str": "27 Jul"
     }
 
     response = create_fallback_narrative(deterministic_report)
 
-    assert "billed ₹3,190.00" in response.narrative
-    assert "collected ₹3,172.00" in response.narrative
-    assert "outstanding amount is ₹18.00" in response.narrative
-    assert "Peak business hour was 13:00" in response.narrative
+    # Check that the narrative follows the expected format
+    assert "Good evening! Here's today's summary for Mehta Clinic" in response.narrative
+    assert "₹3,190 billed across 18 visits, ₹3,172 collected (99%)." in response.narrative
+    assert "₹18 is still outstanding across 0 visits, and ₹0 was refunded on 0 visit(s)." in response.narrative
+    assert "Busiest hour: 1pm-2pm, with ₹760 in revenue." in response.narrative
+    assert "Top mover by quantity: OMEPRAZOLE (18 units)." in response.narrative
+    assert "Top by revenue: ATORVASTATIN (₹1,194)." in response.narrative
+    assert "Note: cost data wasn't available today, so this is revenue, not profit - flagging rather than estimating." in response.narrative
 
     # Check traced figures
     dict_response = response.to_dict()
@@ -287,16 +322,22 @@ def test_generate_llm_narrative_not_configured(mock_is_configured):
             "revenue_by_hour": {},
             "top_medicines_by_quantity": [],
             "top_medicines_by_revenue": []
-        }
+        },
+        "visit_count": 0,
+        "refund_visit_count": 0,
+        "date_str": "Today"
     }
 
     response = generate_llm_narrative(deterministic_report)
 
     # Should use fallback narrative
-    assert "billed ₹1,000.00" in response.narrative
-    assert "collected ₹800.00" in response.narrative
-    assert "outstanding amount is ₹200.00" in response.narrative
-    assert "Peak business hour was 10:00" in response.narrative
+    assert "Good evening! Here's today's summary for Mehta Clinic" in response.narrative
+    assert "₹1,000 billed across 0 visits, ₹800 collected (80%)." in response.narrative
+    assert "₹200 is still outstanding across 0 visits, and ₹0 was refunded on 0 visit(s)." in response.narrative
+    assert "Busiest hour: 10am-11am, with ₹0 in revenue." in response.narrative
+    assert "Top mover by quantity: N/A (0 units)." in response.narrative
+    assert "Top by revenue: N/A (₹0)." in response.narrative
+    assert "Note: cost data wasn't available today, so this is revenue, not profit - flagging rather than estimating." in response.narrative
 
 
 if __name__ == "__main__":

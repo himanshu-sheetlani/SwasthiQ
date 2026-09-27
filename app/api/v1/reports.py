@@ -43,10 +43,24 @@ async def generate_report(records_input: List[dict]):
     reconciliation = compute_reconciliation(stored)
     analytics = compute_analytics(stored)
 
+    # Compute additional counts for narrative
+    visit_count = len(valid_records)
+    refund_visit_count = sum(1 for r in valid_records if r.is_refund)
+
+    # Determine a date string for the narrative (use first record's date if available)
+    date_str = "Today"
+    if valid_records:
+        # Use the date from the first record (format DD MMM)
+        first_date = valid_records[0].timestamp
+        date_str = first_date.strftime("%d %b")  # e.g., "27 Jul"
+
     # Generate LLM narrative
     deterministic_report = {
         "reconciliation": reconciliation,
-        "analytics": analytics
+        "analytics": analytics,
+        "visit_count": visit_count,
+        "refund_visit_count": refund_visit_count,
+        "date_str": date_str
     }
     llm_narrative_response = generate_llm_narrative(deterministic_report)
 

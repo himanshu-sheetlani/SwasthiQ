@@ -70,7 +70,8 @@
 }
 
 .narrative-text {
-  background: white;
+  background: #E6F5E7;
+  border: 1px solid #87b48a;
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -84,6 +85,7 @@
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-family: monospace;
 }
 
 .figure-item {
@@ -120,13 +122,28 @@
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .narrative-layout {
     flex-direction: column;
   }
-  
+
   .narrative-panel,
   .traced-figures-panel {
     min-width: 100%;
   }
+}
+
+/* Success narrative styling (green background) */
+.narrative-success {
+  background-color: #e6f4ea; /* light green */
+  border: 1px solid #2ecc71;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Ensure inner text colors remain appropriate */
+.narrative-success p {
+  color: #2ecc71;
+  margin: 0;
 }

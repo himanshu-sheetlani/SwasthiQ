@@ -5,8 +5,8 @@ from app.main import app
 
 client = TestClient(app)
 
-# DATA_DIR points to sample_billing_dataset at project root
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "sample_billing_dataset")
+# DATA_DIR points to sample_billing_dataset at project root (now under frontend/public)
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "frontend", "public", "sample_billing_dataset")
 
 def load_billing_log(filename):
     path = os.path.join(DATA_DIR, filename)

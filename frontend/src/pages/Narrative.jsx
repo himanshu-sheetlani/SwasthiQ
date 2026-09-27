@@ -116,7 +116,7 @@ export default function Narrative() {
       <div className="narrative-layout">
         <div className="narrative-panel">
           <h2>Generated Narrative</h2>
-          <div className="narrative-text">
+          <div className={`narrative-text ${llmNarrative.source === 'llm' ? 'narrative-success' : ''}`}>
             <p>{narrativeText}</p>
           </div>
         </div>

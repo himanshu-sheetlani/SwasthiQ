@@ -45,20 +45,16 @@
   color: #856404;
 }
 
-.analytics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-}
-
-.chart-section {
+/* Full-width chart section */
+.chart-section-full {
   background: white;
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
 }
 
-.chart-section h2 {
+.chart-section-full h2 {
   margin-top: 0;
   margin-bottom: 1rem;
   color: #333;
@@ -72,48 +68,23 @@
   font-style: italic;
 }
 
-.peak-hour-section {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  text-align: center;
-}
-
-.peak-hour-section h2 {
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  color: #333;
-  font-size: 1.25rem;
-}
-
-.peak-hour-callout {
+/* Bottom section with two columns */
+.analytics-bottom {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
+  gap: 2rem;
 }
 
-.peak-hour-value {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #175AD9;
-}
-
-.peak-hour-revenue {
-  font-size: 1.1rem;
-  color: #666;
-  margin-top: 0.5rem;
-}
-
-.medicines-section {
+.medicines-section-left,
+.medicines-section-right {
+  flex: 1;
   background: white;
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.medicines-section h2 {
+.medicines-section-left h2,
+.medicines-section-right h2 {
   margin-top: 0;
   margin-bottom: 1rem;
   color: #333;
@@ -173,17 +144,27 @@
   padding: 2rem;
 }
 
+/* Custom tooltip for revenue chart */
+.recharts-tooltip-custom {
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
     align-items: flex-start;
   }
-  
-  .analytics-grid {
-    grid-template-columns: 1fr;
+
+  .analytics-bottom {
+    flex-direction: column;
   }
-  
+
   .peak-hour-callout {
     flex-direction: column;
     text-align: center;

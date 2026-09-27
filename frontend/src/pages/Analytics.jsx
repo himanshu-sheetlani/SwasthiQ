@@ -82,9 +82,11 @@ export default function Analytics() {
   const revenueByHour = analytics.revenue_by_hour || {}
   const chartData = []
   for (let hour = 0; hour <= 23; hour++) {
+    const revenue = revenueByHour[hour] || 0
     chartData.push({
       hour: `${hour}:00`,
-      revenue: revenueByHour[hour] || 0
+      revenue: revenue,
+      barHeight: Math.abs(revenue)
     })
   }
 
@@ -113,9 +115,9 @@ export default function Analytics() {
         </div>
       )}
 
-      <div className="analytics-grid">
-        {/* Revenue by Hour Chart */}
-        <div className="chart-section">
+      <>
+        {/* Revenue by Hour Chart - Full Width */}
+        <div className="chart-section-full">
           <h2>Revenue by Hour of Day (UTC)</h2>
           {Object.keys(revenueByHour).length === 0 ? (
             <div className="empty-chart">No transaction data available for this day</div>
@@ -128,75 +130,71 @@ export default function Analytics() {
                   label={{ value: 'Revenue (₹)', angle: -90, position: 'insideLeft' }}
                   tickFormatter={(value) => `₹${(value / 100).toFixed(0)}`}
                 />
-                <Tooltip
-                  formatter={(value) => `₹${(value / 100).toFixed(2)}`}
-                  labelFormatter={(value) => `${value}:00`}
-                />
+                <Tooltip contentStyle={{ padding: '0', pointerEvents: 'none' }}>
+                  {({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const datum = payload[0];
+                      const revenue = datum?.revenue ?? 0;
+                      return (
+                        <div className="recharts-tooltip-custom">
+                          <p>{label}</p>
+                          <p>Net Revenue: ₹{(revenue / 100).toFixed(2)}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                </Tooltip>
                 <Legend verticalAlign="top" height={36} />
-                <Bar dataKey="revenue" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="barHeight" fill="#175AD9" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
 
-        {/* Peak Hour Callout */}
-        <div className="peak-hour-section">
-          <h2>Peak Business Hour</h2>
-          <div className="peak-hour-callout">
-            <div className="peak-hour-value">
-              {analytics.peak_business_hour !== undefined ? 
-                `${analytics.peak_business_hour}:00` : 
-                'N/A'}
+        {/* Bottom Section: Two Columns */}
+        <div className="analytics-bottom">
+          {/* Top Medicines by Quantity - Left */}
+          <div className="medicines-section-left">
+            <h2>Top Medicines by Quantity</h2>
+            <div className="medicines-list">
+              {analytics.top_medicines_by_quantity && analytics.top_medicines_by_quantity.length > 0 ? (
+                <ul>
+                  {analytics.top_medicines_by_quantity.slice(0, 5).map((med, index) => (
+                    <li key={index}>
+                      <span className="medicine-rank">#{index + 1}</span>
+                      <span className="medicine-name">{med.drug_name}</span>
+                      <span className="medicine-value">{med.quantity}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="empty-list">No medicine data available</p>
+              )}
             </div>
-            <p>Hour with highest net revenue</p>
-            {Object.keys(revenueByHour).length > 0 && analytics.peak_business_hour !== undefined && (
-              <p className="peak-hour-revenue">
-                Revenue: ₹{(revenueByHour[analytics.peak_business_hour] / 100).toFixed(2)}
-              </p>
-            )}
           </div>
-        </div>
 
-        {/* Top Medicines by Quantity */}
-        <div className="medicines-section">
-          <h2>Top Medicines by Quantity</h2>
-          <div className="medicines-list">
-            {analytics.top_medicines_by_quantity && analytics.top_medicines_by_quantity.length > 0 ? (
-              <ul>
-                {analytics.top_medicines_by_quantity.slice(0, 5).map((med, index) => (
-                  <li key={index}>
-                    <span className="medicine-rank">#{index + 1}</span>
-                    <span className="medicine-name">{med.drug_name}</span>
-                    <span className="medicine-value">{med.quantity}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="empty-list">No medicine data available</p>
-            )}
+          {/* Top Medicines by Revenue - Right */}
+          <div className="medicines-section-right">
+            <h2>Top Medicines by Revenue</h2>
+            <div className="medicines-list">
+              {analytics.top_medicines_by_revenue && analytics.top_medicines_by_revenue.length > 0 ? (
+                <ul>
+                  {analytics.top_medicines_by_revenue.slice(0, 5).map((med, index) => (
+                    <li key={index}>
+                      <span className="medicine-rank">#{index + 1}</span>
+                      <span className="medicine-name">{med.drug_name}</span>
+                      <span className="medicine-value">₹{(med.revenue_paise / 100).toFixed(2)}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="empty-list">No medicine data available</p>
+              )}
+            </div>
           </div>
         </div>
-
-        {/* Top Medicines by Revenue */}
-        <div className="medicines-section">
-          <h2>Top Medicines by Revenue</h2>
-          <div className="medicines-list">
-            {analytics.top_medicines_by_revenue && analytics.top_medicines_by_revenue.length > 0 ? (
-              <ul>
-                {analytics.top_medicines_by_revenue.slice(0, 5).map((med, index) => (
-                  <li key={index}>
-                    <span className="medicine-rank">#{index + 1}</span>
-                    <span className="medicine-name">{med.drug_name}</span>
-                    <span className="medicine-value">₹{(med.revenue_paise / 100).toFixed(2)}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="empty-list">No medicine data available</p>
-            )}
-          </div>
-        </div>
-      </div>
+      </>
     </div>
   )
 }

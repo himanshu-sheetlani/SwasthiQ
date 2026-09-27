@@ -86,7 +86,7 @@ export default function Analytics() {
     chartData.push({
       hour: `${hour}:00`,
       revenue: revenue,
-      barHeight: Math.abs(revenue)
+      barHeight: Math.abs(revenue/100)
     })
   }
 
@@ -128,7 +128,7 @@ export default function Analytics() {
                 <XAxis dataKey="hour" />
                 <YAxis
                   label={{ value: 'Revenue (₹)', angle: -90, position: 'insideLeft' }}
-                  tickFormatter={(value) => `₹${(value / 100).toFixed(0)}`}
+                  tickFormatter={(value) => `₹${(value).toFixed(0)}`}
                 />
                 <Tooltip contentStyle={{ padding: '0', pointerEvents: 'none' }}>
                   {({ active, payload, label }) => {

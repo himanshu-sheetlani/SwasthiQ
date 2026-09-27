@@ -33,11 +33,11 @@ export default function Analytics() {
 
   const getFileContent = async (date) => {
     const fileMap = {
-      '2026-07-25': '../../../sample_billing_dataset/billing_log_2026-07-25.json',
-      '2026-07-26': '../../../sample_billing_dataset/billing_log_2026-07-26.json',
-      '2026-07-27': '../../../sample_billing_dataset/billing_log_2026-07-27.json'
+      '2026-07-25': '/sample_billing_dataset/billing_log_2026-07-25.json',
+      '2026-07-26': '/sample_billing_dataset/billing_log_2026-07-26.json',
+      '2026-07-27': '/sample_billing_dataset/billing_log_2026-07-27.json'
     }
-    
+
     const response = await fetch(fileMap[date])
     if (!response.ok) {
       throw new Error(`Failed to load data for ${date}`)

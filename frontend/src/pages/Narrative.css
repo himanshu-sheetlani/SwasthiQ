@@ -54,19 +54,18 @@
 .narrative-panel {
   flex: 2;
   min-width: 300px;
+  border: 1px solid #cbd5e1; /* Light gray border */
+  border-radius: 12px;       /* Rounded corners */
+  padding: 24px;
+  background-color: #ffffff;
+  font-family: system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
 }
 
-.traced-figures-panel {
-  flex: 1;
-  min-width: 250px;
-}
-
-.narrative-panel h2,
-.traced-figures-panel h2 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  color: #333;
-  font-size: 1.25rem;
+.narrative-panel h2 {
+  margin: 0;
 }
 
 .narrative-text {
@@ -80,40 +79,55 @@
   font-size: 1rem;
 }
 
+.traced-figures-panel {
+  border: 1px solid #cbd5e1; /* Light gray border */
+  border-radius: 12px;       /* Rounded corners */
+  padding: 24px;
+  background-color: #ffffff;
+  font-family: system-ui, -apple-system, sans-serif;
+  max-width: 500px;
+}
+
+.panel-header h2 {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  color: #1e293b;
+}
+
+.panel-header .subtitle {
+  margin: 0 0 24px 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
 .traced-figures-content {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  font-family: monospace;
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Vertical spacing between rows */
 }
 
 .figure-item {
-  background: #f8f9fa;
-  border-radius: 4px;
-  padding: 1rem;
-  margin-bottom: 0.75rem;
-  border-left: 3px solid #175AD9;
-}
-
-.figure-label {
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 0.25rem;
-  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 
 .figure-value {
-  font-weight: bold;
-  color: #175AD9;
-  margin-bottom: 0.25rem;
-  font-size: 1.1rem;
+  font-weight: 700;
+  color: #334155;
+  font-size: 1rem;
+  min-width: 140px; /* Adjust this to control how far right the purple text sits */
 }
 
 .figure-description {
-  font-size: 0.85rem;
-  color: #666;
-  line-height: 1.4;
+  color: #9333ea; /* Purple color matching the target design */
+  font-size: 0.9rem;
+}
+
+.no-traced-figures {
+  color: #94a3b8;
+  font-size: 0.9rem;
 }
 
 /* Responsive */

@@ -91,7 +91,7 @@
   border-radius: 4px;
   padding: 1rem;
   margin-bottom: 0.75rem;
-  border-left: 3px solid #667eea;
+  border-left: 3px solid #175AD9;
 }
 
 .figure-label {
@@ -103,7 +103,7 @@
 
 .figure-value {
   font-weight: bold;
-  color: #667eea;
+  color: #175AD9;
   margin-bottom: 0.25rem;
   font-size: 1.1rem;
 }

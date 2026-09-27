@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Testing API Response</h1>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            try {
+                const response = await axios.post(
+                    'http://localhost:8000/api/v1/reports',
+                    {"test": "data"} // We'll send dummy data for now
+                );
+
+                document.getElementById('result').innerHTML =
+                    '<h2>Response Type:</h2><p>' + typeof response.data + '</p>' +
+                    '<h2>Response Data:</h2><pre>' + JSON.stringify(response.data, null, 2) + '</pre>' +
+                    '<h2>LLM Narrative:</h2><p>' + response.data.llm_narrative.narrative + '</p>';
+
+            } catch (error) {
+                document.getElementById('result').innerHTML = '<p>Error: ' + error.message + '</p>';
+                if (error.response) {
+                    document.getElementById('result').innerHTML += '<p>Response data: ' + JSON.stringify(error.response.data) + '</p>';
+                }
+            }
+        }
+
+        testAPI();
+    </script>
+</body>
+</html>

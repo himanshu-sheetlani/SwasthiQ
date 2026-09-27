@@ -16,7 +16,6 @@ export default function Reconciliation() {
     try {
       setLoading(true)
       setError(null)
-      
       const response = await axios.post(
         'http://localhost:8000/api/v1/reports',
         // In a real app, we would fetch the actual file based on selectedDate
@@ -25,6 +24,7 @@ export default function Reconciliation() {
       )
       
       setReport(response.data)
+      console.log('Fetched report:', response.data)
     } catch (err) {
       setError(err.response?.data || err.message || 'Failed to fetch data')
     } finally {

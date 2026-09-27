@@ -5,6 +5,7 @@ from pydantic import ValidationError
 from app.services.repository import InMemoryBillingRepository
 from app.services.reconciliation import compute_reconciliation
 from app.services.analytics import compute_analytics
+from app.services.llm_narrative import generate_llm_narrative
 
 router = APIRouter()
 repository = InMemoryBillingRepository()
@@ -12,7 +13,7 @@ repository = InMemoryBillingRepository()
 @router.post("/reports")
 async def generate_report(records_input: List[dict]):
     """
-    Accepts a billing log (list of dicts) and returns deterministic report.
+    Accepts a billing log (list of dicts) and returns deterministic report with LLM narrative.
     Validation errors are collected per record; valid records are processed.
     """
     valid_records: List[BillingRecord] = []
@@ -42,11 +43,19 @@ async def generate_report(records_input: List[dict]):
     reconciliation = compute_reconciliation(stored)
     analytics = compute_analytics(stored)
 
+    # Generate LLM narrative
+    deterministic_report = {
+        "reconciliation": reconciliation,
+        "analytics": analytics
+    }
+    llm_narrative_response = generate_llm_narrative(deterministic_report)
+
     response = {
         "report": {
             "reconciliation": reconciliation,
             "analytics": analytics,
-        }
+        },
+        "llm_narrative": llm_narrative_response.to_dict()
     }
     if validation_errors:
         response["validation_errors"] = validation_errors

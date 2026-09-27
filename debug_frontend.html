@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Debug</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Frontend Debug Test</h1>
+    <div id="debug"></div>
+    
+    <script>
+        async function fetchData() {
+            try {
+                const response = await axios.post(
+                    'http://localhost:8000/api/v1/reports',
+                    {"test": "data"}
+                );
+                
+                document.getElementById('debug').innerHTML = `
+                    <h2>Full Response:</h2>
+                    <pre>${JSON.stringify(response.data, null, 2)}</pre>
+                    <h2>LLM Narrative:</h2>
+                    <p>${response.data.llm_narrative?.narrative || 'No narrative'}</p>
+                    <h2>Traced Figures Count:</h2>
+                    <p>${response.data.llm_narrative?.traced_figures?.length || 0}</p>
+                `;
+                
+                if (response.data.llm_narrative?.traced_figures) {
+                    const figuresHtml = response.data.llm_narrative.traced_figures.map(fig => 
+                        `<div><strong>${fig.report_field}:</strong> ${fig.display_value} (value: ${fig.value})</div>`
+                    ).join('');
+                    document.getElementById('debug').innerHTML += `<h2>Traced Figures:</h2>${figuresHtml}`;
+                }
+            } catch (error) {
+                document.getElementById('debug').innerHTML = `<p>Error: ${error.message}</p>`;
+                if (error.response) {
+                    document.getElementById('debug').innerHTML += `<p>Response: ${JSON.stringify(error.response.data, null, 2)}</p>`;
+                }
+            }
+        }
+        
+        fetchData();
+    </script>
+</body>
+</html>

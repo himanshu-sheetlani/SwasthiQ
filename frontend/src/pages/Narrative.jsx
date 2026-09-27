@@ -16,12 +16,12 @@ export default function Narrative() {
     try {
       setLoading(true)
       setError(null)
-      
+
       const response = await axios.post(
         'http://localhost:8000/api/v1/reports',
         await getFileContent(selectedDate)
       )
-      
+
       setReport(response.data)
     } catch (err) {
       setError(err.response?.data || err.message || 'Failed to fetch data')
@@ -36,7 +36,7 @@ export default function Narrative() {
       '2026-07-26': '../sample_billing_dataset/billing_log_2026-07-26.json',
       '2026-07-27': '../sample_billing_dataset/billing_log_2026-07-27.json'
     }
-    
+
     const response = await fetch(fileMap[date])
     if (!response.ok) {
       throw new Error(`Failed to load data for ${date}`)
@@ -76,15 +76,17 @@ export default function Narrative() {
   }
 
   const { reconciliation, validation_errors, analytics } = report.report
+  const llmNarrative = report.llm_narrative || {}
 
-  // Simple placeholder narrative
-  const narrative = `On the selected date, the clinic processed financial transactions including billings, collections, and refunds. The data shows various metrics related to payment methods and medication dispensing.`;
+  // Extract narrative and traced figures from LLM response
+  const narrativeText = llmNarrative.narrative || "Narrative not available"
 
-  // Simple traced figures
-  const tracedFigures = [
-    { label: 'Total Billed', value: '₹0', description: 'Placeholder' },
-    { label: 'Total Collected', value: '₹0', description: 'Placeholder' }
-  ]
+  // Format traced figures for display
+  const tracedFigures = (llmNarrative.traced_figures || []).map(fig => ({
+    label: fig.report_field.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()),
+    value: fig.display_value,
+    description: `Source: ${fig.report_field}`
+  }))
 
   return (
     <div className="content-wrapper">
@@ -92,7 +94,7 @@ export default function Narrative() {
         <h1>AI Narrative Summary</h1>
         <div className="date-selector">
           <label htmlFor="date-select">Select Date: </label>
-          <select 
+          <select
             id="date-select"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
@@ -115,20 +117,26 @@ export default function Narrative() {
         <div className="narrative-panel">
           <h2>Generated Narrative</h2>
           <div className="narrative-text">
-            <p>{narrative}</p>
+            <p>{narrativeText}</p>
           </div>
         </div>
 
         <div className="traced-figures-panel">
           <h2>Traced Figures</h2>
           <div className="traced-figures-content">
-            {tracedFigures.map((figure, index) => (
-              <div key={index} className="figure-item">
-                <div className="figure-label">{figure.label}</div>
-                <div className="figure-value">{figure.value}</div>
-                <div className="figure-description">{figure.description}</div>
+            {tracedFigures.length > 0 ? (
+              tracedFigures.map((figure, index) => (
+                <div key={index} className="figure-item">
+                  <div className="figure-label">{figure.label}</div>
+                  <div className="figure-value">{figure.value}</div>
+                  <div className="figure-description">{figure.description}</div>
+                </div>
+              ))
+            ) : (
+              <div className="no-traced-figures">
+                <p>No traced figures available</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

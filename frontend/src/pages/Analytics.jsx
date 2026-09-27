@@ -33,9 +33,9 @@ export default function Analytics() {
 
   const getFileContent = async (date) => {
     const fileMap = {
-      '2026-07-25': '../sample_billing_dataset/billing_log_2026-07-25.json',
-      '2026-07-26': '../sample_billing_dataset/billing_log_2026-07-26.json',
-      '2026-07-27': '../sample_billing_dataset/billing_log_2026-07-27.json'
+      '2026-07-25': '../../../sample_billing_dataset/billing_log_2026-07-25.json',
+      '2026-07-26': '../../../sample_billing_dataset/billing_log_2026-07-26.json',
+      '2026-07-27': '../../../sample_billing_dataset/billing_log_2026-07-27.json'
     }
     
     const response = await fetch(fileMap[date])
@@ -124,18 +124,18 @@ export default function Analytics() {
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="hour" />
-                <YAxis 
+                <YAxis
                   label={{ value: 'Revenue (₹)', angle: -90, position: 'insideLeft' }}
                   tickFormatter={(value) => `₹${(value / 100).toFixed(0)}`}
                 />
-                <Tooltip 
+                <Tooltip
                   formatter={(value) => `₹${(value / 100).toFixed(2)}`}
                   labelFormatter={(value) => `${value}:00`}
                 />
                 <Legend verticalAlign="top" height={36} />
                 <Bar dataKey="revenue" fill="#8884d8" radius={[4, 4, 0, 0]} />
-              </ResponsiveContainer>
-            </BarChart>
+              </BarChart>
+            </ResponsiveContainer>
           )}
         </div>
 

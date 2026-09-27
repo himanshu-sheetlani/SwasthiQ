@@ -18,7 +18,7 @@ export default function Narrative() {
       setError(null);
 
       const response = await axios.post(
-        "http://localhost:8000/api/v1/reports",
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/reports`,
         await getFileContent(selectedDate),
       );
 

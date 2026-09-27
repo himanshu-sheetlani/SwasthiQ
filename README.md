@@ -2,8 +2,10 @@
 <img src="https://hr.swasthiq.com/files/swasthiq-mark.png" alt="SwasthiQ Logo" width="120"/>
 </p>
 
+
 # SwasthiQ – Clinic Management System with LLM Narrative Layer
 
+Live URL : https://swasthi-q-eight.vercel.app/
 ## Description
 SwasthiQ processes billing logs, generates deterministic financial reports, and augments them with LLM‑produced narratives suitable for WhatsApp. All numbers in the narrative are traced to the deterministic report.
 

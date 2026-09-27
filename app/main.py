@@ -8,7 +8,10 @@ app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend URL
+    allow_origins=[
+        "http://localhost:5173",  # Local development
+        "https://swasthi-q-eight.vercel.app"  # Production frontend
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

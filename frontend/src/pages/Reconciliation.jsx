@@ -17,7 +17,7 @@ export default function Reconciliation() {
       setLoading(true)
       setError(null)
       const response = await axios.post(
-        'http://localhost:8000/api/v1/reports',
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/reports`,
         // In a real app, we would fetch the actual file based on selectedDate
         // For now, we'll simulate by using the date to determine which file to load
         await getFileContent(selectedDate)
